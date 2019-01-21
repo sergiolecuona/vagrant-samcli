@@ -1,73 +1,25 @@
-MASTER = 1
-NODES = 1
-
-Vagrant.configure("2") do |configSW|
-
-  configSW.vm.box = 'centos/7'
-  configSW.vm.provision "file", source: File.expand_path("../id_rsa.pub", __FILE__), destination: "~/.ssh/authorized_keys"
-  configSW.ssh.insert_key = false
-  configSW.ssh.private_key_path = [File.expand_path("../id_rsa", __FILE__), "~/.vagrant.d/insecure_private_key"]
-
-  configSW.vm.provider 'virtualbox' do |v|
-      v.linked_clone = true if Vagrant::VERSION =~ /^1.8/
-  end
-
-  (1..MASTER).each do |master_id|
-      configSW.vm.define "swarm-master#{master_id}" do |master|
-        master.vm.hostname = "master#{master_id}"
-        master.vm.network "private_network", ip: "192.168.77.#{20+master_id}"
-        master.vm.box_check_update = false
-        master.vm.provider "virtualbox" do |v|
-          #play with this value
-          v.memory = 2048
-          v.cpus = 1
-        end
-      end
-  end
-
-  (1..NODES).each do |node_id|
-      configSW.vm.define "swarm-node#{node_id}" do |node|
-        node.vm.hostname = "node#{node_id}"
-        node.vm.network "private_network", ip: "192.168.77.#{30+node_id}"
-        node.vm.box_check_update = false
-        node.vm.provider "virtualbox" do |v|
-          v.memory = 2048
-          v.cpus = 1
-        end
-      end
-  end
-
-end
-
 Vagrant.configure("2") do |configLS|
+
+  configLS.vm.provision "file", source: File.expand_path("../id_rsa.pub", __FILE__), destination: "~/.ssh/authorized_keys"
+  configLS.ssh.insert_key = false
+  configLS.ssh.private_key_path = [File.expand_path("../id_rsa", __FILE__), "~/.vagrant.d/insecure_private_key"]
+  
   configLS.vm.box = "bento/centos-7.2"
 
+  configLS.vm.define "SAM-node"
+  configLS.vm.hostname = "samnode"
+  configLS.vm.network "private_network", ip:"192.168.77.30"
+  configLS.vm.box_check_update = false
+  configLS.vm.provider "virtualbox" do |v|
+          v.memory = 4096
+          v.cpus = 1
+        end
+		
   configLS.vm.provision "shell", privileged: true, inline: <<-SHELL
     yum install -y epel-release
     yum update -y
-    yum install -y \
-             bzip2\
-             kernel kernel-tools\
-             python-devel\
-             python-virtualenv\
-             python2-pip\
-             make\
-             npm\
-             java-1.8.0-openjdk\
-             maven\
-             unzip\
-             git
     pip install pip --upgrade
     pip install awscli --user
-  SHELL
-  configLS.vm.provision "shell", privileged: false, inline: <<-SHELL
-    if [ ! -d localstack ]; then
-      git clone https://github.com/atlassian/localstack.git
-    fi
-    cd localstack
-    make install
-    make test
-    make infra
   SHELL
 
   for port in 4567..4582 do
