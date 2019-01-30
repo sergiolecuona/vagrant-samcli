@@ -1,0 +1,28 @@
+---
+  - name: Upgrade OS
+    yum:
+      name: '*'
+      state: latest
+  - name: Install packages
+    yum: pkg={{item}} state=installed
+    with_items:
+      - epel-release
+      - python
+      - python-pip
+      - awscli
+      - telnet
+      - yum-utils
+      - bind-utils
+      - gcc
+      - python-setuptools
+      - python-devel
+      - devel
+      - pip
+      - docker
+  - name: Install with pip
+    pip:
+      name:
+        - aws-sam-cli
+  - name: set timezone to Europe/Madrid
+    timezone:
+      name: Europe/Madrid

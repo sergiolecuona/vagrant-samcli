@@ -1,0 +1,7 @@
+---
+- hosts: launched
+  become: True
+  remote_user: "{{ os_user }}"
+  gather_facts: True
+  roles:
+    - configOS
